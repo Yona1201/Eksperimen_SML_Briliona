@@ -48,33 +48,41 @@ def preprocess_data(df):
 
     print("\nMemulai Preprocessing...")
     df_prep = df.copy()
+    
+    TARGET_COL = 'Diabetes_binary' 
+    
+    # Pastikan kolom target ada
+    if TARGET_COL not in df_prep.columns:
+        print(f"ERROR: Kolom target '{TARGET_COL}' tidak ditemukan. Preprocessing dibatalkan.")
+        return None # Kembalikan None jika target tidak ada
 
     # 1. Drop Duplicates
     len_before_drop = len(df_prep)
     df_prep.drop_duplicates(inplace=True)
     print(f"- Data setelah drop duplikat: {len(df_prep)} (dibuang {len_before_drop - len(df_prep)})")
 
-    # 2. Handle Outliers (IQR) pada Fitur (kecuali target)
-    if TARGET_COL in df_prep.columns:
-         cols_to_check_outliers = df_prep.drop(TARGET_COL, axis=1).select_dtypes(include=np.number).columns
-    else:
-         cols_to_check_outliers = df_prep.select_dtypes(include=np.number).columns
-         
+    # 2. Handle Outliers (IQR) pada Fitur (KECUALI target)
     print("- Penanganan Outliers (IQR) pada Fitur...")
     count_before_outlier = len(df_prep)
+    
+    # Eksplisit ambil kolom numerik selain target
+    cols_to_check_outliers = df_prep.drop(TARGET_COL, axis=1).select_dtypes(include=np.number).columns
+         
     for col in cols_to_check_outliers:
+        # Pastikan kolom masih ada dan numerik
         if col in df_prep.columns and pd.api.types.is_numeric_dtype(df_prep[col]):
             Q1 = df_prep[col].quantile(0.25)
             Q3 = df_prep[col].quantile(0.75)
             IQR_val = Q3 - Q1
             lower_bound = Q1 - 1.5 * IQR_val
             upper_bound = Q3 + 1.5 * IQR_val
+            # Filter data
             df_prep = df_prep[(df_prep[col] >= lower_bound) & (df_prep[col] <= upper_bound)]
     
     count_after_outlier = len(df_prep)
     print(f"- Data setelah handle outliers: {count_after_outlier} (dibuang {count_before_outlier - count_after_outlier} baris)")
 
-    # 3. Handle Missing Values (jika ada sisa)
+    # 3. Handle Sisa Missing Values (jika ada)
     if df_prep.isnull().sum().sum() > 0:
          rows_before_na = len(df_prep)
          df_prep.dropna(inplace=True)
