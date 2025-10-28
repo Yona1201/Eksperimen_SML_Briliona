@@ -1,0 +1,34 @@
+name: Automatic Data Preprocessing
+
+on:
+  push: 
+    branches: [ main ] 
+  workflow_dispatch: 
+
+jobs:
+  preprocess-data: 
+    runs-on: ubuntu-latest 
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v4 
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas numpy scikit-learn 
+          # Tambahkan library lain jika automate_Briliona.py membutuhkannya
+
+      - name: Run preprocessing script
+        run: python preprocessing/automate_Briliona.py
+
+      - name: Upload processed data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: processed-diabetes-data 
+          path: preprocessing/diabetes_preprocessing/diabetes_preprocessing.csv 
